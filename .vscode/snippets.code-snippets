@@ -1,0 +1,103 @@
+{
+    "_LOGGER variable": {
+        "scope": "python",
+        "prefix": "logger",
+        "body": [
+            "_LOGGER = logs.get_lambda_logger()"
+        ],
+        "description": "Add _LOGGER variable"
+    },
+    "_Settings class": {
+        "scope": "python",
+        "prefix": "settings",
+        "body": [
+            "class _Settings(settings.Settings):",
+            "    $1",
+            "",
+            "",
+            "_SETTINGS = _Settings()"
+        ],
+        "description": "Add _Settings class"
+    },
+    "Handler function": {
+        "scope": "python",
+        "prefix": "handler",
+        "body": [
+            "def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:",
+            "    $1"
+        ],
+        "description": "Add handler function"
+    },
+    "Log error": {
+        "scope": "python",
+        "prefix": "log error",
+        "body": [
+            "_LOGGER.error($1)"
+        ]
+    },
+    "Log exception": {
+        "scope": "python",
+        "prefix": "log exception",
+        "body": [
+            "_LOGGER.exception($1)"
+        ],
+        "description": "Log exception message"
+    },
+    "Log info": {
+        "scope": "python",
+        "prefix": "log info",
+        "body": [
+            "_LOGGER.info($1)"
+        ],
+        "description": "Log info message"
+    },
+    "Log warning": {
+        "scope": "python",
+        "prefix": "log warning",
+        "body": [
+            "_LOGGER.warning($1)"
+        ],
+        "description": "Log warning message"
+    },
+    "Pytest Parametrize": {
+        "scope": "python",
+        "prefix": "pytest parametrize",
+        "body": [
+            "@pytest.mark.parametrize(",
+            "    \"$1\",",
+            "    [",
+            "        ($2)",
+            "    ]",
+            ")"
+        ],
+        "description": "Add parametrize decorator"
+    },
+    "Mock patch": {
+        "scope": "python",
+        "prefix": "mock patch",
+        "body": [
+            "@mock.patch(\"$1\")"
+        ],
+        "description": "Patch target"
+    },
+    "Mock patch environ": {
+        "scope": "python",
+        "prefix": "mock patch environ",
+        "body": [
+            "@mock.patch.dict(os.environ, $1)"
+        ],
+        "description": "Mock patch os.environ"
+    },
+    "Unit test": {
+        "scope": "python",
+        "prefix": "unit test",
+        "body": [
+            "@pytest.mark.unittest",
+            "def test_should_$1() -> None:",
+            "    from $2 import $3 as subject",
+            "",
+            "    $4"
+        ],
+        "description": "Add unit test"
+    },
+}
