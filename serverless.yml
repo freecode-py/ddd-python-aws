@@ -1,0 +1,167 @@
+service: ddd-python-project
+configValidationMode: error
+plugins:
+  - serverless-python-requirements
+  - serverless-deployment-bucket
+  
+provider:
+  name: aws
+  runtime: python3.9
+  timeout: 300
+  memorySize: 256
+  stage: dev
+  region: us-east-1
+  deploymentBucket: 
+    name: ${self:custom.deployment_bucket_name}
+    serverSideEncryption: AES256
+  versionFunctions: false
+  
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - "dynamodb:PutItem"
+            - "dynamodb:UpdateItem"
+            - "dynamodb:BatchWriteItem"
+            - "dynamodb:GetItem"
+            - "dynamodb:BatchGetItem"
+            - "dynamodb:Scan"
+            - "dynamodb:Query"
+            - "dynamodb:ConditionCheckItem"
+          Resource: "*"
+            # - ${self:custom.resource_arns.dynamodb.AggregateCompany}
+            # - ${self:custom.resource_arns.dynamodb.AggregateCompany}/index/*
+
+
+  environment:
+    STAGE: ${self:provider.stage}
+    PROJECT_NAME: ${self:service}
+    
+  stackTags:
+    MainProject: ${self:custom.tags.MainProject}
+
+
+
+package:
+  individually: true
+  patterns:
+     - '!node_modules/**'
+     - '!.vscode/**'
+     - '!.devcontainer/**'
+     - '!Dockerfile'
+     - '!pytest.ini'
+     - '!tests/**'
+     - '!layers/**'
+
+custom:
+  deploymentBucket:
+    versioning: true
+    accelerate: true
+    blockPublicAccess: true
+    tags:
+      - Key: Environment
+        Value: ${self:provider.stage}
+        
+  arnRegionAndAccount: ${self:provider.region}:{aws:accountId}
+
+  tags:
+    MainProject: "DDD project example"
+
+
+  staged_resources_suffix:
+    prod: ''
+    dev: '-dev'
+
+  deployment_bucket_name: ddd-project-example-us-east-1-dev
+
+
+  resources_suffix: ${self:custom.staged_resources_suffix.${self:provider.stage}}
+
+  functions:
+    CreateCompanyTest: 
+      name: ${self:service}-create-company-test-${self:provider.stage}
+      arn:  arn:aws:lambda:${self:custom.arnRegionAndAccount}:function:${self:custom.functions.CreateCompanyTest.name}
+    
+    GetCompanyByIdTest:
+      name: ${self:service}-get-company-by-id-test-${self:provider.stage}
+      
+  resources:
+    layers:
+       commons:
+         name: ${self:provider.stage}-${self:service}-commons-python-layer
+    dynamodb:
+      AggregateCompany: 
+        name: ${self:service}-company-aggregate-${self:provider.stage}
+        arn: arn:aws:dynamodb:${self:custom.arnRegionAndAccount}:table/${self:custom.resources.dynamodb.AggregateCompany.name}
+        key_name: "id._key"
+  
+  pythonRequirements:
+    slim: true
+    strip: false
+    noDeploy:
+      - pytest
+      - mock
+      - pipreqs
+      - black
+    layer:
+      name: ${self:custom.resources.layers.commons.name}
+      description: Python requirements lambda layer for amazon vendor marketplace information extraction process
+      compatibleRuntimes:
+          - python3.9
+      
+
+# layers:
+#     commons:
+#       path: layers/commons
+#       name: ${self:custom.resources.layers.commons.name}
+#       description: Python commons requirements
+#       compatibleRuntimes:
+#           - ${self:provider.runtime}
+#       retain: false # because this is a example, we will always delete old layers when new ones are created
+
+functions:
+
+  CreateCompanyTest:
+    name: ${self:custom.functions.CreateCompanyTest.name}
+    handler: src/company/entrypoints/cron/handler_test.handler
+    description: "Handler for testing propose"
+    environment:
+      AGGREGATE_COMPANY_TABLE_NAME: ${self:custom.resources.dynamodb.AggregateCompany.name}
+      AGGREGATE_COMPANY_TABLE_KEY_NAME: ${self:custom.resources.dynamodb.AggregateCompany.key_name}
+    layers:
+      - !Ref PythonRequirementsLambdaLayer
+
+  GetCompanyByIdTest:
+    name: ${self:custom.functions.GetCompanyByIdTest.name}
+    handler: src/company/entrypoints/cron/handler_test.handler_get_company
+    description: "Handler for testing propose"
+    environment:
+      AGGREGATE_COMPANY_TABLE_NAME: ${self:custom.resources.dynamodb.AggregateCompany.name}
+      AGGREGATE_COMPANY_TABLE_KEY_NAME: ${self:custom.resources.dynamodb.AggregateCompany.key_name}
+    layers:
+      - !Ref PythonRequirementsLambdaLayer
+
+
+
+resources:
+
+  Resources:
+    AggregateCompany:
+        Type: AWS::DynamoDB::Table
+        Properties:
+          TableName: ${self:custom.resources.dynamodb.AggregateCompany.name}
+          BillingMode: PAY_PER_REQUEST
+          PointInTimeRecoverySpecification:
+            PointInTimeRecoveryEnabled: true
+          AttributeDefinitions:
+            - AttributeName: ${self:custom.resources.dynamodb.AggregateCompany.key_name}
+              AttributeType: "S"
+          KeySchema:
+            - AttributeName: ${self:custom.resources.dynamodb.AggregateCompany.key_name}
+              KeyType: "HASH"
+          StreamSpecification:
+            StreamViewType: NEW_AND_OLD_IMAGES
+
+
+  Outputs:
