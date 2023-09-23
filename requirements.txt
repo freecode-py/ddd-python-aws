@@ -2,6 +2,7 @@ boto3==1.28.1
 pydantic==1.10.8
 pydantic[email]
 pytest==7.3.1
+pytest-mock==3.11.1
 mock==5.0.2
 pipreqs==0.4.13
 black==23.7.0
