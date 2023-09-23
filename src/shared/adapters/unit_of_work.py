@@ -55,7 +55,7 @@ class UnitOfWork(Protocol):
 MAX_DYNAMO_DB_BATCH_SIZE_PER_TRX = 100
 
 
-class DynamoDbUnitOfWork(UnitOfWork):
+class DynamoDbUnitOfWork:
     def __init__(
         self,
     ) -> None:
@@ -104,6 +104,17 @@ class DynamoDbUnitOfWork(UnitOfWork):
             k: deserializer.deserialize(v) for k, v in dynamodb_record.items()
         }
         return parsed_record
+
+
+    @classmethod
+    def serialize_entity(cls, entity: E) -> Dict[str, Any]:
+        from decimal import Decimal
+
+        nested_dict = entity.dict()
+        for k, v in nested_dict.items():
+            if isinstance(v, Decimal):
+                nested_dict[k] = float(v)
+        return nested_dict
 
     def get_item_by_id(
         self, table_name: str, key_name: str, id: I, entity_type: Type[E]
@@ -163,16 +174,6 @@ class DynamoDbUnitOfWork(UnitOfWork):
             table_name=table_name, key_name=key_name, entity_dict=record_serialized
         )
         self._batches.add_operation(operation)
-
-    @classmethod
-    def serialize_entity(cls, entity: E) -> Dict[str, Any]:
-        from decimal import Decimal
-
-        nested_dict = entity.dict()
-        for k, v in nested_dict.items():
-            if isinstance(v, Decimal):
-                nested_dict[k] = float(v)
-        return nested_dict
 
     def rollback(self) -> None:
         ...
