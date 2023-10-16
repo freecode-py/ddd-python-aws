@@ -97,6 +97,6 @@ def test_should_dynamodb_uow_deserializer_item_successfuly(
         "address": "test_address",
         "country": "USA",
     }
-    
+
+
 # TODO: ADD MORE UNIT TESTS
-    

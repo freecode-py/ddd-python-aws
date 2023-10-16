@@ -147,6 +147,7 @@ class Command(ValueObject):
 class DomainEvent(ValueObject):
     id: str = pydantic.Field(default_factory=UUIDGenerator.uuid)
     created: EpochTime = pydantic.Field(default_factory=EpochTime.now)
+    domain_name: str
 
 
 def split_list(input_list: List[Any], chunk_size: int) -> Iterator[Any]:
