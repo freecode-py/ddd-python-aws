@@ -15,7 +15,7 @@ provider:
     name: ${self:custom.deployment_bucket_name}
     serverSideEncryption: AES256
   versionFunctions: false
-  
+
   iam:
     role:
       statements:
@@ -30,8 +30,12 @@ provider:
             - "dynamodb:Query"
             - "dynamodb:ConditionCheckItem"
           Resource: "*"
-            # - ${self:custom.resource_arns.dynamodb.AggregateCompany}
-            # - ${self:custom.resource_arns.dynamodb.AggregateCompany}/index/*
+        - Effect: Allow
+          Action:
+            - "events:PutEvents"
+          Resource:  "*"
+        #   - ${self:custom.resources.eventbus.Company.arn}
+
 
 
   environment:
@@ -85,6 +89,10 @@ custom:
     
     GetCompanyByIdTest:
       name: ${self:service}-get-company-by-id-test-${self:provider.stage}
+    
+        
+    CompanyEventsListener:
+      name: ${self:service}-company-event-listener-${self:provider.stage}
       
   resources:
     layers:
@@ -96,6 +104,11 @@ custom:
         arn: arn:aws:dynamodb:${self:custom.arnRegionAndAccount}:table/${self:custom.resources.dynamodb.AggregateCompany.name}
         key_name: "id._key"
   
+    eventbus:
+      Company:
+        name: company-event-bus
+        arn: arn:aws:events:${self:custom.arnRegionAndAccount}:event-bus/${self:custom.resources.eventbus.Company.name}
+
   pythonRequirements:
     slim: true
     strip: false
@@ -129,8 +142,10 @@ functions:
     environment:
       AGGREGATE_COMPANY_TABLE_NAME: ${self:custom.resources.dynamodb.AggregateCompany.name}
       AGGREGATE_COMPANY_TABLE_KEY_NAME: ${self:custom.resources.dynamodb.AggregateCompany.key_name}
+      EVENT_BRIDGE_TOPIC_ARN: ${self:custom.resources.eventbus.Company.name}
     layers:
       - !Ref PythonRequirementsLambdaLayer
+
 
   GetCompanyByIdTest:
     name: ${self:custom.functions.GetCompanyByIdTest.name}
@@ -143,10 +158,29 @@ functions:
       - !Ref PythonRequirementsLambdaLayer
 
 
+  CompanyEventsListener:
+    name: ${self:custom.functions.CompanyEventsListener.name}
+    handler: src/company/entrypoints/events/company.handler
+    description: "Handler listen events associated to company context"
+    layers:
+      - !Ref PythonRequirementsLambdaLayer
+    events:
+      - eventBridge:
+          eventBus: !Ref CompanyEventBus
+          pattern:
+            source: 
+              - Company
+
+
 
 resources:
 
   Resources:
+    CompanyEventBus:
+      Type: AWS::Events::EventBus
+      Properties:
+        Name: ${self:custom.resources.eventbus.Company.name}
+
     AggregateCompany:
         Type: AWS::DynamoDB::Table
         Properties:
@@ -162,6 +196,6 @@ resources:
               KeyType: "HASH"
           StreamSpecification:
             StreamViewType: NEW_AND_OLD_IMAGES
-
+    
 
   Outputs:
