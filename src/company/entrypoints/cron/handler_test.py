@@ -28,3 +28,4 @@ def handler_get_company(event: Dict[str, Any], context: Any):
     except Exception as ex:
         print(ex)
         raise
+
