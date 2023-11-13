@@ -7,7 +7,7 @@ E = TypeVar("E", bound=base_types.RepositoryAggregate)
 I = TypeVar("I", bound=base_types.EntityId)
 
 
-class Repository(Protocol):
+class Repository(Protocol[E]):
     def put(self, item: E) -> None:
         ...
 

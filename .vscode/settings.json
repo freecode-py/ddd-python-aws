@@ -3,5 +3,11 @@
     "[python]": {
         "editor.defaultFormatter": "ms-python.autopep8"
     },
-    "python.formatting.provider": "none"
+    "python.formatting.provider": "none",
+    "emacs-mcx.strictEmacsMove": true,
+    "emacs-mcx.emacsLikeTab": false,
+    "emacs-mcx.useMetaPrefixEscape": true,
+    "emacs-mcx.cursorMoveOnFindWidget": false,
+    "emacs-mcx.inMarkMode": true,
+    "emacs-mcx.prefixArgumentExists": true
 }
