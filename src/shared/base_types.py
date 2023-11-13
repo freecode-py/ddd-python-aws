@@ -34,20 +34,20 @@ class EpochTime(ValueObject):
     def __str__(self) -> str:
         return str(self.time_ns)
 
-    def __lt__(self, epoch_time: "EpochTime") -> bool:
-        return self.time_ns < epoch_time.time_ns
+    # def __lt__(self, epoch_time: Any) -> bool:
+    #     return self.time_ns < epoch_time.time_ns
 
-    def __le__(self, epoch_time: "EpochTime") -> bool:
-        return self.time_ns <= epoch_time.time_ns
+    # def __le__(self, epoch_time: "EpochTime") -> bool:
+    #     return self.time_ns <= epoch_time.time_ns
 
-    def __eq__(self, epoch_time: "EpochTime") -> bool:
-        return self.time_ns == epoch_time.time_ns
+    # def __eq__(self, epoch_time: Any) -> bool:
+    #     return self.time_ns == epoch_time.time_ns
 
-    def __gt__(self, epoch_time: "EpochTime") -> bool:
-        return self.time_ns > epoch_time.time_ns
+    # def __gt__(self, epoch_time: "EpochTime") -> bool:
+    #     return self.time_ns > epoch_time.time_ns
 
-    def __ge__(self, epoch_time: "EpochTime") -> bool:
-        return self.time_ns >= epoch_time.time_ns
+    # def __ge__(self, epoch_time: Any) -> bool:
+    #     return self.__le__(epoch_time=epoch_time)
 
     @staticmethod
     def now() -> "EpochTime":
@@ -76,7 +76,7 @@ class Key(ValueObject):
         return attr_dict
 
     def _key(self, **kwargs: Dict[str, Any]) -> str:
-        attrs_dict = super().dict(**kwargs)
+        attrs_dict = super().dict(**kwargs)  # type: ignore
 
         def values(attrs_dict: Dict[str, Any]) -> Iterator[str]:
             for v in attrs_dict.values():
@@ -127,7 +127,7 @@ class DomainAggregate(RootEntity):
         self._events.append(event)
 
     def pull_events(self) -> List["DomainEvent"]:
-        events = copy.copy(self._events)
+        events = self._events.copy()
         self._events.clear()
         return events
 

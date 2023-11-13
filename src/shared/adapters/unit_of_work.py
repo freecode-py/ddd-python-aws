@@ -7,11 +7,13 @@ from botocore import exceptions as boto3_exceptions
 from typing import Protocol, TypeVar, List, Iterator, Dict, Any, Type
 from src.shared import logging
 from src.shared import base_types
+from src.shared.adapters import event_publisher
 
 _LOGGER = logging.Logger("Unit of Work")
 
 E = TypeVar("E", bound=base_types.RepositoryAggregate)
 I = TypeVar("I", bound=base_types.EntityId)
+DE = TypeVar("DE", bound=base_types.DomainEvent)
 
 
 class UnknownTransactionTypeError(Exception):
@@ -51,6 +53,9 @@ class UnitOfWork(Protocol):
     def rollback(self) -> None:
         ...
 
+    def publish_events(self, events: List[DE]) -> None:
+        ...
+
 
 MAX_DYNAMO_DB_BATCH_SIZE_PER_TRX = 100
 
@@ -60,9 +65,11 @@ class DynamoDbUnitOfWork:
         self,
     ) -> None:
         self._dynamodb_client = boto3.client("dynamodb")
+        self._message_bus_client = event_publisher.EventBridgePublisher()
         self._batches = _DynamoDbWriteOperationsBuilder(
             dynamodb_client=self._dynamodb_client
         )
+        self._events_to_publish: List[DE] = []
         self._transaction_type: TransactionType = TransactionType.NONE
 
     @contextlib.contextmanager
@@ -74,6 +81,7 @@ class DynamoDbUnitOfWork:
             self.commit()
         finally:
             self._transaction_type = TransactionType.NONE
+            self._events_to_publish.clear()
 
     @contextlib.contextmanager
     def batch(self) -> None:
@@ -84,6 +92,7 @@ class DynamoDbUnitOfWork:
             self.commit()
         finally:
             self._transaction_type = TransactionType.NONE
+            self._events_to_publish.clear()
 
     def commit(self) -> None:
         if self._transaction_type == TransactionType.SINGLE:
@@ -94,6 +103,9 @@ class DynamoDbUnitOfWork:
             raise UnknownTransactionTypeError(
                 "Error when try to identify the transaction type. For now we only allow SINGLE and BATCH transaction types"
             )
+        if self._events_to_publish:
+            _LOGGER.info("Publishing event domain associated")
+            self._message_bus_client.publish(events=self._events_to_publish)
 
     @classmethod
     def _deserializer_item(cls, dynamodb_record: Dict[str, Any]) -> Dict[str, Any]:
@@ -104,7 +116,6 @@ class DynamoDbUnitOfWork:
             k: deserializer.deserialize(v) for k, v in dynamodb_record.items()
         }
         return parsed_record
-
 
     @classmethod
     def serialize_entity(cls, entity: E) -> Dict[str, Any]:
@@ -177,6 +188,9 @@ class DynamoDbUnitOfWork:
 
     def rollback(self) -> None:
         ...
+
+    def publish_events(self, events: List[DE]) -> None:
+        self._events_to_publish.extend(events)
 
 
 class FakeUnitOfWork:
