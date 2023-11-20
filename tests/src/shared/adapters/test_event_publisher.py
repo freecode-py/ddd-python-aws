@@ -36,7 +36,7 @@ def test_should_publish_events_successfuly(
     )
     assert event_published_dict["Source"] == fake_event.domain_name
     assert event_published_dict["DetailType"] == str(type(fake_event))
-    assert event_published_dict["Detail"] == json.dumps(fake_event.dict())
+    assert event_published_dict["Detail"] == json.dumps(fake_event.model_dump())
 
 
 # @pytest.mark.unittest

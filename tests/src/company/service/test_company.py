@@ -1,4 +1,3 @@
-
 from src.company.service import commands, company as service
 from src.shared.adapters import unit_of_work
 

@@ -2,7 +2,7 @@ import pytest
 import mock
 from typing import Any, Dict, Iterator
 from unittest.mock import MagicMock
-from src.shared.adapters.repository import DynamoDbRepository
+from src.shared.adapters.persistence.dynamodb_repository import DynamoDbRepository
 from src.shared.adapters import unit_of_work
 from src.shared import base_types
 
