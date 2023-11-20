@@ -19,7 +19,7 @@ class EventPublisher(Protocol):
         ...
 
 
-class _CommonSettings(pydantic.BaseSettings):
+class _CommonSettings(base_types.Settings):
     backoff_default_tries: int = pydantic.Field(default=3, env="BACKOFF_DEFAULT_TRIES")
     backoff_default_max_time: int = pydantic.Field(
         default=3, env="BACKOFF_DEFAULT_MAX_TIME"
@@ -30,7 +30,7 @@ COMMON_SETTINGS = _CommonSettings()
 
 
 class EventBridgePublisher:
-    class _Settings(pydantic.BaseSettings):
+    class _Settings(base_types.Settings):
         event_bridge_topic_arn: str = pydantic.Field(
             default="TO-FILL", env="EVENT_BRIDGE_TOPIC_ARN"
         )
@@ -91,11 +91,11 @@ class EventBridgePublisher:
             EventBusName=self._settings.event_bridge_topic_arn,
             Source=domain_event.domain_name,
             DetailType=str(type(domain_event)),
-            Detail=json.dumps(domain_event.dict()),
-        ).dict(by_alias=True)
+            Detail=json.dumps(domain_event.model_dump()),
+        ).model_dump(by_alias=True)
 
     def _put_events(self, events: List[Dict[str, Any]]) -> Dict[str, Any]:
-        return self._client.put_events(Entries=events)
+        return self._client.put_events(Entries=events)  # type: ignore
 
 
 class FakeEventBridgePublisher(EventBridgePublisher, EventPublisher):
