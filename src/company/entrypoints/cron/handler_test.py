@@ -3,8 +3,7 @@ try:
     from src.shared.adapters import unit_of_work
     from typing import Dict, Any
 except Exception as ex:
-    raise Exception("ERROR IN THE IMPORT PACKAGE") from ex
-    
+    raise Exception(f"ERROR IN THE IMPORT PACKAGE {ex}") from ex
 
 
 def handler(event: Dict[str, Any], context: Any) -> None:

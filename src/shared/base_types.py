@@ -19,7 +19,7 @@ class UUIDGenerator:
         return str(uuid.uuid4())
 
 
-class ValueObject(pydantic.BaseModel):
+class Inmutable(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(
         frozen=True,
         extra="ignore",
@@ -29,7 +29,11 @@ class ValueObject(pydantic.BaseModel):
     )
 
 
-class EpochTime(ValueObject):
+class ValueObject(Inmutable):
+    ...
+
+
+class EpochTime(Inmutable):
     time_ns: int
 
     def __str__(self) -> str:
@@ -65,7 +69,7 @@ def update_last_udpate_date(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-class Key(ValueObject):
+class Key(Inmutable):
     class MalformedError(Exception):
         def __init__(self) -> None:
             super().__init__(
@@ -141,11 +145,11 @@ class Projection(DomainAggregate):
     ...
 
 
-class Command(ValueObject):
+class Command(Inmutable):
     ...
 
 
-class DomainEvent(ValueObject):
+class DomainEvent(Inmutable):
     id: str = pydantic.Field(default_factory=UUIDGenerator.uuid)
     created: EpochTime = pydantic.Field(default_factory=EpochTime.now)
     domain_name: str

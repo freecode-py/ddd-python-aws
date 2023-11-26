@@ -23,15 +23,9 @@ class WriteOperation(Protocol):
         ...
 
 
-ClientDB = Any
-
-
 class SessionDB(Protocol):
     _batches: Dict[str, WriteOperation] = {}
-
-    @property
-    def client(self) -> ClientDB:
-        ...
+    client: Any
 
     def add_write_operation(self, operation: WriteOperation) -> None:
         ...

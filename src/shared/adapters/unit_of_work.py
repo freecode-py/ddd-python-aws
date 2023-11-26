@@ -8,6 +8,7 @@ from typing import (
     List,
     Iterator,
     Dict,
+    Final
 )
 from src.shared import logging
 from src.shared import base_types
@@ -51,7 +52,7 @@ class UnitOfWork(Protocol):
         ...
 
 
-MAX_DYNAMO_DB_BATCH_SIZE_PER_TRX = 100
+MAX_DYNAMO_DB_BATCH_SIZE_PER_TRX: Final = 100
 
 
 class DynamoDbUnitOfWork(UnitOfWork):
@@ -170,10 +171,7 @@ class TransactionFailedError(Exception):
 class DefaultDynamoDBSession(persistence_commons.SessionDB):
     def __init__(self) -> None:
         self._batches: Dict[str, persistence_commons.WriteOperation] = {}
-
-    @property
-    def client(self) -> persistence_commons.ClientDB:
-        return persistence_commons.ClientDB(boto3.client("dynamodb"))
+        self.client = boto3.client("dynamodb")
 
     def add_write_operation(self, operation: WriteOperation) -> None:
         if self._batches.get(operation.id):
