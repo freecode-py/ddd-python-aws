@@ -6,7 +6,8 @@ plugins:
   
 provider:
   name: aws
-  runtime: python3.9
+  runtime: python3.10
+  architecture: arm64
   timeout: 300
   memorySize: 256
   stage: dev
@@ -121,7 +122,9 @@ custom:
       name: ${self:custom.resources.layers.commons.name}
       description: Python requirements lambda layer for amazon vendor marketplace information extraction process
       compatibleRuntimes:
-          - python3.9
+        - python3.10
+      compatibleArchitectures: # optional, a list of architectures this layer is compatible with
+        - arm64
       
 
 # layers:
