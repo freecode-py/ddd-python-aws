@@ -1,9 +1,6 @@
-try:
-    from src.company.service import commands, company as services
-    from src.shared.adapters import unit_of_work
-    from typing import Dict, Any
-except Exception as ex:
-    raise Exception(f"ERROR IN THE IMPORT PACKAGE {ex}") from ex
+from src.company.service import commands, company as services
+from src.shared.adapters import unit_of_work
+from typing import Dict, Any
 
 
 def handler(event: Dict[str, Any], context: Any) -> None:
