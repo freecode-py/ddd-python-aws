@@ -4,8 +4,8 @@ import pydantic
 import uuid
 import time
 import functools
-import copy
 from typing import Dict, Any, Iterator, List, Callable
+from pydantic_settings import BaseSettings
 
 
 class NamedEnum(str, enum.Enum):
@@ -19,16 +19,21 @@ class UUIDGenerator:
         return str(uuid.uuid4())
 
 
-class ValueObject(pydantic.BaseModel):
-    class Config:
-        frozen = True
-        extra = pydantic.Extra.ignore
-        json_encoders = {
+class Inmutable(pydantic.BaseModel):
+    model_config = pydantic.ConfigDict(
+        frozen=True,
+        extra="ignore",
+        json_encoders={
             decimal.Decimal: str,
-        }
+        },
+    )
 
 
-class EpochTime(ValueObject):
+class ValueObject(Inmutable):
+    ...
+
+
+class EpochTime(Inmutable):
     time_ns: int
 
     def __str__(self) -> str:
@@ -64,7 +69,7 @@ def update_last_udpate_date(func: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
-class Key(ValueObject):
+class Key(Inmutable):
     class MalformedError(Exception):
         def __init__(self) -> None:
             super().__init__(
@@ -72,11 +77,11 @@ class Key(ValueObject):
             )
 
     def dict(self, **kwargs: Any) -> Dict[str, Any]:
-        attr_dict = super().dict(**kwargs)
+        attr_dict = super().model_dump(**kwargs)
         return attr_dict
 
     def _key(self, **kwargs: Dict[str, Any]) -> str:
-        attrs_dict = super().dict(**kwargs)  # type: ignore
+        attrs_dict = super().model_dump(**kwargs)  # type: ignore
 
         def values(attrs_dict: Dict[str, Any]) -> Iterator[str]:
             for v in attrs_dict.values():
@@ -94,13 +99,13 @@ class EntityId(Key):
 
 
 class Entity(pydantic.BaseModel):
-    id: "EntityId"
-
-    class Config:
-        extra = pydantic.Extra.ignore
-        json_encoders = {
+    model_config = pydantic.ConfigDict(
+        extra="ignore",
+        json_encoders={
             decimal.Decimal: str,
-        }
+        },
+    )
+    id: "EntityId"
 
 
 class RootEntity(Entity):
@@ -108,11 +113,11 @@ class RootEntity(Entity):
     last_update: EpochTime = pydantic.Field(default_factory=EpochTime.now)
     version: int = pydantic.Field(default=0)
 
-    def _increase_version(self):
+    def _increase_version(self) -> None:
         self.version += 1
 
     def dict(self, **kwargs: Any) -> Dict[str, Any]:
-        attr_dict = super().dict(**kwargs)
+        attr_dict = super().model_dump(**kwargs)
         return attr_dict
 
 
@@ -123,7 +128,7 @@ class DomainAggregate(RootEntity):
     def events(self) -> List["DomainEvent"]:
         return self._events
 
-    def add_event(self, event: "DomainEvent"):
+    def add_event(self, event: "DomainEvent") -> None:
         self._events.append(event)
 
     def pull_events(self) -> List["DomainEvent"]:
@@ -140,11 +145,11 @@ class Projection(DomainAggregate):
     ...
 
 
-class Command(ValueObject):
+class Command(Inmutable):
     ...
 
 
-class DomainEvent(ValueObject):
+class DomainEvent(Inmutable):
     id: str = pydantic.Field(default_factory=UUIDGenerator.uuid)
     created: EpochTime = pydantic.Field(default_factory=EpochTime.now)
     domain_name: str
@@ -163,3 +168,7 @@ class Country(NamedEnum):
     ARG = enum.auto()
     DOM = enum.auto()
     CO = enum.auto()
+
+
+class Settings(BaseSettings):
+    ...

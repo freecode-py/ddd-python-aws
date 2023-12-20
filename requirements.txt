@@ -1,7 +1,8 @@
 boto3==1.28.1
 boto3-stubs==1.28.68
-pydantic==1.10.8
+pydantic==2.4.0
 pydantic[email]
+pydantic-settings==2.1.0
 pytest==7.3.1
 pytest-mock==3.11.1
 mock==5.0.2

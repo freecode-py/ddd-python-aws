@@ -2,6 +2,7 @@ import pytest
 import mock
 from typing import List
 from src.shared import base_types
+import pydantic
 
 
 class FooId(base_types.EntityId):
@@ -16,10 +17,10 @@ def test_should_UUIDGenerator_generate_uuid() -> None:
 @pytest.mark.unittest
 def test_should_ValueObject_instace_inmutable() -> None:
     class Foo(base_types.ValueObject):
-        a = 1
+        a: int
 
-    foo = Foo()
-    with pytest.raises(TypeError):
+    foo = Foo(a=1)
+    with pytest.raises(pydantic.ValidationError):
         foo.a = 2
 
 

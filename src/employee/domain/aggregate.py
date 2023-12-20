@@ -29,7 +29,7 @@ class Employee(base_types.DomainAggregate):
     @classmethod
     def create(cls, name: str, email: str, company_id: str) -> "Employee":
         entity = cls(
-            id=EmployeeId(name=name, email=EmailStr(email)),
+            id=EmployeeId(name=name, email=email),
             company_id=company_id,
             status=EmployeeStatus.ACTIVE,
         )
@@ -45,17 +45,17 @@ class Employee(base_types.DomainAggregate):
     @update_last_udpate_date
     def active(self):
         self.status = EmployeeStatus.ACTIVE
-        self._events.append(events.EmployeeActivated(user_id=self.id.email))
+        self._events.append(events.EmployeeActivated(employee_id=self.id.email))
 
     @update_last_udpate_date
     def inactive(self):
         self.status = EmployeeStatus.INACTIVE
-        self._events.append(events.EmployeeDisabled(user_id=self.id.email))
+        self._events.append(events.EmployeeDisabled(employee_id=self.id.email))
 
     @update_last_udpate_date
     def block(self):
         self.status = EmployeeStatus.BLOCKED
-        self._events.append(events.EmployeeBlocked(user_id=self.id.email))
+        self._events.append(events.EmployeeBlocked(employee_id=self.id.email))
 
     def is_actived(self):
         return self.status == EmployeeStatus.ACTIVE

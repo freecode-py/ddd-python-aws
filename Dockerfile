@@ -1,5 +1,5 @@
 # Use the official Ubuntu image as the base image
-FROM ubuntu:latest
+FROM arm64v8/ubuntu:latest
 
 # Avoid interactive prompts during the installation
 ENV DEBIAN_FRONTEND=noninteractive
@@ -10,11 +10,11 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/*
 
-# Install Python 3.9 and pip
+# Install Python 3.10 and pip
 RUN add-apt-repository -y ppa:deadsnakes/ppa && \
     apt-get update && \
-    apt-get install -y python3.9 python3.9-distutils && \
-    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1 && \
+    apt-get install -y python3.10 python3.10-distutils && \
+    update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.10 1 && \
     curl -s https://bootstrap.pypa.io/get-pip.py | python3
 
 # Install Node.js and npm

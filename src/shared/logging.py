@@ -1,38 +1,24 @@
 import logging
+import os
+import sys
+from typing import Optional
+
+format = (
+    "%(asctime)s | %(levelname)-7s | %(module)s.%(funcName)s:%(lineno)d | %(message)s"
+)
+logger: Optional[logging.Logger] = None
 
 
-class Logger:
-    def __init__(self, name, level=logging.DEBUG, filename=None):
-        self.logger = logging.getLogger(name)
-        self.logger.setLevel(level)
-
-        formatter = logging.Formatter(
-            "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+def get_lambda_logger() -> logging.Logger:
+    global logger
+    if not logger:
+        stdout_handler = logging.StreamHandler(sys.stdout)
+        stdout_handler.setFormatter(logging.Formatter(format))
+        logger = logging.getLogger(
+            os.environ.get("AWS_LAMBDA_FUNCTION_NAME", "NoLambdaEnvironment")
         )
+        logger.setLevel(logging.INFO)
+        stdout_handler.setLevel(logging.INFO)
+        logger.addHandler(stdout_handler)
 
-        if filename:
-            file_handler = logging.FileHandler(filename)
-            file_handler.setFormatter(formatter)
-            self.logger.addHandler(file_handler)
-        else:
-            console_handler = logging.StreamHandler()
-            console_handler.setFormatter(formatter)
-            self.logger.addHandler(console_handler)
-
-    def debug(self, message):
-        self.logger.debug(message)
-
-    def info(self, message):
-        self.logger.info(message)
-
-    def warning(self, message):
-        self.logger.warning(message)
-
-    def error(self, message):
-        self.logger.error(message)
-
-    def exception(self, message):
-        self.logger.exception(message)
-
-    def critical(self, message):
-        self.logger.critical(message)
+    return logger
