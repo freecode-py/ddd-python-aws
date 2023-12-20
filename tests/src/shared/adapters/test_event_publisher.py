@@ -1,6 +1,7 @@
 import pytest
 from src.shared.adapters import event_publisher as publisher
 from src.shared import base_types
+from tests.src.fake_shared_adapters import FakeEventBridgePublisher
 
 
 class EventFakeCreated(base_types.DomainEvent):
@@ -8,13 +9,13 @@ class EventFakeCreated(base_types.DomainEvent):
 
 
 @pytest.fixture(scope="function")
-def event_bridge_publisher() -> publisher.FakeEventBridgePublisher:
-    return publisher.FakeEventBridgePublisher()
+def event_bridge_publisher() -> FakeEventBridgePublisher:
+    return FakeEventBridgePublisher()
 
 
 @pytest.mark.unittest
 def test_should_not_publish_when_event_list_is_empty(
-    event_bridge_publisher: publisher.FakeEventBridgePublisher,
+    event_bridge_publisher: FakeEventBridgePublisher,
 ) -> None:
     event_bridge_publisher.publish(events=[])
     assert event_bridge_publisher.events_published == []
@@ -22,7 +23,7 @@ def test_should_not_publish_when_event_list_is_empty(
 
 @pytest.mark.unittest
 def test_should_publish_events_successfuly(
-    event_bridge_publisher: publisher.FakeEventBridgePublisher,
+    event_bridge_publisher: FakeEventBridgePublisher,
 ) -> None:
     import json
 

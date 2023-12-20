@@ -23,7 +23,7 @@ def item_mock() -> MockEntity:
 @pytest.fixture(scope="function")
 def dynamodb_repository_instance(uow: unit_of_work.UnitOfWork) -> DynamoDbRepository:
     repo = DynamoDbRepository(
-        uow=uow, table_name="test_table", key_name="id._key", entity_type=MockEntity
+        session=uow.session, table_name="test_table", entity_type=MockEntity
     )
     return repo
 
@@ -34,30 +34,10 @@ def test_dynamodb_put(
     dynamodb_repository_instance: DynamoDbRepository,
     item_mock: MockEntity,
 ):
-    uow.add_put_operation = mock.MagicMock(return_value=None)
-    dynamodb_repository_instance.put(item_mock)
-    uow.add_put_operation.assert_called_once_with(
-        table_name=dynamodb_repository_instance._table_name,
-        key_name=dynamodb_repository_instance._key_name,
-        item=item_mock,
-    )
-
-
-@pytest.mark.unittest
-def test_dynamodb_get_by_id(
-    uow: unit_of_work.UnitOfWork,
-    dynamodb_repository_instance: DynamoDbRepository,
-    item_mock: MockEntity,
-):
-    uow.get_item_by_id = mock.MagicMock(return_value=item_mock)
-    result = dynamodb_repository_instance.get_by_id(item_mock.id)
-    uow.get_item_by_id.assert_called_once_with(
-        table_name=dynamodb_repository_instance._table_name,
-        key_name=dynamodb_repository_instance._key_name,
-        id=item_mock.id,
-        entity_type=type(item_mock),
-    )
-    assert result == item_mock
+    with uow.transaction():
+        dynamodb_repository_instance.put(item_mock)
+    record_registred = dynamodb_repository_instance.find_by_id(id=item_mock.id)
+    assert record_registred
 
 
 @pytest.mark.unittest

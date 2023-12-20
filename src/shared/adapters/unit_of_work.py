@@ -3,13 +3,7 @@ import contextlib
 import boto3
 import backoff
 from botocore import exceptions as boto3_exceptions
-from typing import (
-    Protocol,
-    List,
-    Iterator,
-    Dict,
-    Final
-)
+from typing import Protocol, List, Iterator, Dict, Final
 from src.shared import logging
 from src.shared import base_types
 from src.shared.adapters import event_publisher
@@ -108,41 +102,6 @@ class DynamoDbUnitOfWork(UnitOfWork):
 
     def publish_events(self, events: List[base_types.DomainEvent]) -> None:
         self._events_to_publish.extend(events)
-
-
-class FakeUnitOfWork:
-    def __init__(
-        self,
-    ) -> None:
-        self._commited = False
-        self._transaction_type: TransactionType = TransactionType.NONE
-        self._batches: Dict[str, base_types.RepositoryAggregate] = {}
-
-    @contextlib.contextmanager
-    def transaction(self) -> Iterator[None]:
-        try:
-            _LOGGER.info("Init in single transaction context manager")
-            self._transaction_type = TransactionType.SINGLE
-            yield
-            self.commit()
-        finally:
-            self._transaction_type = TransactionType.NONE
-
-    @contextlib.contextmanager
-    def batch(self) -> Iterator[None]:
-        try:
-            _LOGGER.info("Init in batch transaction context manager")
-            self._transaction_type = TransactionType.BATCH
-            yield
-            self.commit()
-        finally:
-            self._transaction_type = TransactionType.NONE
-
-    def commit(self) -> None:
-        self._commited = True
-
-    def rollback(self) -> None:
-        ...
 
 
 ############## DYNAMO DB WRITE OPERATION IN DB COMPONENTS ####################################################

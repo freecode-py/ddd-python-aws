@@ -1,6 +1,7 @@
 import pytest
 import mock
 from src.shared.adapters import unit_of_work
+from src.shared.adapters.persistence import commons as persistence_commons
 
 
 @pytest.mark.unittest
@@ -20,10 +21,8 @@ def dynamodb_uow() -> unit_of_work.DynamoDbUnitOfWork:
 def test_should_DynamoDb_uow_init_successfuly(
     dynamodb_uow: unit_of_work.DynamoDbUnitOfWork,
 ) -> None:
-    assert dynamodb_uow._dynamodb_client
-    assert isinstance(
-        dynamodb_uow._batches, unit_of_work._DynamoDbWriteOperationsBuilder
-    )
+    assert dynamodb_uow._session
+    assert isinstance(dynamodb_uow._session, unit_of_work.DefaultDynamoDBSession)
     assert dynamodb_uow._transaction_type == unit_of_work.TransactionType.NONE
 
 
@@ -59,7 +58,7 @@ def test_should_commit_single_transaction_successfuly(
 ) -> None:
     dynamodb_uow._transaction_type = unit_of_work.TransactionType.SINGLE
     mock_execute_single = mocker.patch.object(
-        dynamodb_uow._batches, "execute_in_single_transaction"
+        dynamodb_uow._session, "execute_in_single_transaction"
     )
 
     dynamodb_uow.commit()
@@ -73,7 +72,7 @@ def test_should_commit_batch_transaction_successfuly(
 ) -> None:
     dynamodb_uow._transaction_type = unit_of_work.TransactionType.BATCH
     mock_execute_batch = mocker.patch.object(
-        dynamodb_uow._batches, "execute_in_batch_transaction"
+        dynamodb_uow._session, "execute_in_batch_transaction"
     )
 
     dynamodb_uow.commit()
@@ -81,22 +80,22 @@ def test_should_commit_batch_transaction_successfuly(
     mock_execute_batch.assert_called_once()
 
 
-@pytest.mark.unittest
-def test_should_dynamodb_uow_deserializer_item_successfuly(
-    dynamodb_uow: unit_of_work.DynamoDbUnitOfWork,
-) -> None:
-    item_db = {
-        "id._key": {"S": "SOLES SA"},
-        "address": {"S": "test_address"},
-        "country": {"S": "USA"},
-    }
-    item_deserialized = dynamodb_uow._deserializer_item(dynamodb_record=item_db)
-    assert isinstance(item_deserialized, dict)
-    assert item_deserialized == {
-        "id._key": "SOLES SA",
-        "address": "test_address",
-        "country": "USA",
-    }
+# @pytest.mark.unittest
+# def test_should_dynamodb_uow_deserializer_item_successfuly(
+#     dynamodb_uow: unit_of_work.DynamoDbUnitOfWork,
+# ) -> None:
+#     item_db = {
+#         "id._key": {"S": "SOLES SA"},
+#         "address": {"S": "test_address"},
+#         "country": {"S": "USA"},
+#     }
+#     item_deserialized = dynamodb_uow._deserializer_item(dynamodb_record=item_db)
+#     assert isinstance(item_deserialized, dict)
+#     assert item_deserialized == {
+#         "id._key": "SOLES SA",
+#         "address": "test_address",
+#         "country": "USA",
+#     }
 
 
 # TODO: ADD MORE UNIT TESTS

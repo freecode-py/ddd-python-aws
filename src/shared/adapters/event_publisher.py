@@ -96,22 +96,3 @@ class EventBridgePublisher:
 
     def _put_events(self, events: List[Dict[str, Any]]) -> Dict[str, Any]:
         return self._client.put_events(Entries=events)  # type: ignore
-
-
-class FakeEventBridgePublisher(EventBridgePublisher, EventPublisher):
-    def __init__(self) -> None:
-        super().__init__()
-        self.events_published: List[Dict[str, Any]] = []
-
-    def publish(self, events: List[E]) -> None:
-        super().publish(events=events)
-
-    def _put_events(self, events: List[Dict[str, Any]]) -> Dict[str, Any]:
-        self.events_published.extend(events)
-        return {"FailedEntryCount": 0, "Entries": []}
-
-    def is_event_type_was_published(self, event_type: Type[E]) -> bool:
-        for e in self.events_published:
-            if str(event_type) == e["DetailType"]:
-                return True
-        return False

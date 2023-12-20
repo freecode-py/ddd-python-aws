@@ -29,7 +29,7 @@ class Employee(base_types.DomainAggregate):
     @classmethod
     def create(cls, name: str, email: str, company_id: str) -> "Employee":
         entity = cls(
-            id=EmployeeId(name=name, email=EmailStr(email)),
+            id=EmployeeId(name=name, email=email),
             company_id=company_id,
             status=EmployeeStatus.ACTIVE,
         )

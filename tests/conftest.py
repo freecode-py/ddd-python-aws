@@ -2,6 +2,7 @@ import os
 
 import pytest
 from src.shared.adapters import unit_of_work
+from tests.src.fake_shared_adapters import FakeDynamoDbUnitOfWork
 
 
 def pytest_generate_tests(metafunc):
@@ -18,4 +19,4 @@ def pytest_generate_tests(metafunc):
 
 @pytest.fixture
 def uow() -> unit_of_work.UnitOfWork:
-    return unit_of_work.FakeUnitOfWork()
+    return FakeDynamoDbUnitOfWork()

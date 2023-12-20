@@ -62,7 +62,7 @@ class DynamoDbRepository(commons.Repository[E]):
         operation_type: Type["_DynamoDbWriteOperation"],
     ) -> "_DynamoDbWriteOperation":
         # In case of error we don't update the real item in memory
-        item_to_save = item.copy()
+        item_to_save = item.model_copy()
         item_to_save._increase_version()
         record_serialized = self._serialize_entity(item_to_save)
         record_serialized[self._key_name] = item_to_save.id._key()
@@ -79,7 +79,7 @@ class DynamoDbRepository(commons.Repository[E]):
         if item:
             item_deserialized = self._deserializer_item(dynamodb_record=item)
             print(f"Item result: {item_deserialized}")
-            return self._entity_type.parse_obj(item_deserialized)
+            return self._entity_type.model_validate(item_deserialized)
         raise ValueError(f"Item with id {id._key()} not found")
 
     def find_by_id(self, id: I) -> Optional[E]:
@@ -97,13 +97,12 @@ class DynamoDbRepository(commons.Repository[E]):
             response = self._session.client.scan(**params)
             items = response.get("Items", [])
             for item in items:
-                yield self._entity_type.parse_obj(item)
+                yield self._entity_type.model_validate(item)
 
             if "LastEvaluatedKey" in response:
                 params["ExclusiveStartKey"] = response["LastEvaluatedKey"]
             else:
                 break
-
 
 ############## DYNAMO DB WRITE OPERATION IN DB COMPONENTS ####################################################
 class DuplicateWriteOperationsError(Exception):
